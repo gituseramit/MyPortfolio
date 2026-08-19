@@ -1,0 +1,68 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'thanksamitkeshari@gmail.com' &&
+        request.auth.token.email_verified == true
+      );
+    }
+
+    // Validation for Contact Messages
+    function isValidContactMessage(data) {
+      return data.keys().hasAll(['name', 'email', 'message', 'createdAt']) &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.email is string && data.email.size() >= 3 && data.email.size() <= 150 &&
+        data.message is string && data.message.size() >= 1 && data.message.size() <= 5000 &&
+        (!('subject' in data) || (data.subject is string && data.subject.size() <= 200));
+    }
+
+    // Validation for Project Reactions
+    function isValidReaction(data) {
+      return data.keys().hasAll(['projectId', 'likesCount', 'lastUpdated']) &&
+        data.projectId is string && data.projectId.size() >= 1 && data.projectId.size() <= 100 &&
+        data.likesCount is number && data.likesCount >= 0;
+    }
+
+    // Contact Messages Collection
+    match /contact_messages/{messageId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if isValidId(messageId) && isValidContactMessage(incoming()) && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Project Reactions Collection
+    match /project_reactions/{projectId} {
+      allow get: if isValidId(projectId);
+      allow list: if true;
+      allow create: if isValidId(projectId) && isValidReaction(incoming()) && incoming().projectId == projectId && incoming().lastUpdated == request.time;
+      allow update: if isValidId(projectId) && isValidReaction(incoming()) && incoming().projectId == existing().projectId && incoming().lastUpdated == request.time && incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'lastUpdated']);
+      allow delete: if isAdmin();
+    }
+  }
+}

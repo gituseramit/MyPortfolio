@@ -1,0 +1,76 @@
+{
+  "entities": {
+    "ContactMessage": {
+      "title": "ContactMessage",
+      "description": "Incoming message submitted through the portfolio contact dispatch form.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the contact message."
+        },
+        "name": {
+          "type": "string",
+          "description": "Sender full name.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "email": {
+          "type": "string",
+          "description": "Sender email address.",
+          "format": "email",
+          "maxLength": 150
+        },
+        "subject": {
+          "type": "string",
+          "description": "Subject of the message.",
+          "maxLength": 200
+        },
+        "message": {
+          "type": "string",
+          "description": "Detailed message body.",
+          "minLength": 1,
+          "maxLength": 5000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the message was submitted."
+        }
+      },
+      "required": ["name", "email", "message", "createdAt"]
+    },
+    "ProjectReaction": {
+      "title": "ProjectReaction",
+      "description": "Likes and reactions for portfolio projects and engineering lab simulations.",
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "description": "Identifier of the project or lab experiment.",
+          "maxLength": 100
+        },
+        "likesCount": {
+          "type": "number",
+          "description": "Total count of likes."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the reaction was last recorded."
+        }
+      },
+      "required": ["projectId", "likesCount", "lastUpdated"]
+    }
+  },
+  "firestore": {
+    "/contact_messages/{messageId}": {
+      "schema": "ContactMessage",
+      "description": "Stores user submitted inquiries and collaboration requests."
+    },
+    "/project_reactions/{projectId}": {
+      "schema": "ProjectReaction",
+      "description": "Stores reaction telemetry for each project."
+    }
+  }
+}
